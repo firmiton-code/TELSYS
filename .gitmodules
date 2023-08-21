@@ -1,0 +1,18 @@
+[submodule "telkes_revamped/lib/TFT_eSPI"]
+	path = telkes_revamped/lib/TFT_eSPI
+	url = https://github.com/Bodmer/TFT_eSPI
+[submodule "telkes_revamped/lib/Arduino-MAX30100"]
+	path = telkes_revamped/lib/Arduino-MAX30100
+	url = https://github.com/oxullo/Arduino-MAX30100.git
+[submodule "telkes_revamped/lib/Adafruit_MLX90614"]
+	path = telkes_revamped/lib/Adafruit_MLX90614
+	url = https://github.com/adafruit/Adafruit-MLX90614-Library.git
+[submodule "telkes_revamped/lib/Adafruit_ADS1X15"]
+	path = telkes_revamped/lib/Adafruit_ADS1X15
+	url = https://github.com/adafruit/Adafruit_ADS1X15.git
+[submodule "telkes_revamped/lib/Adafruit_BusIO"]
+	path = telkes_revamped/lib/Adafruit_BusIO
+	url = https://github.com/adafruit/Adafruit_BusIO
+[submodule "telkes_revamped/lib/Adafruit_Sensor"]
+	path = telkes_revamped/lib/Adafruit_Sensor
+	url = https://github.com/adafruit/Adafruit_Sensor
