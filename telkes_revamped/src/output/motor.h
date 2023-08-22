@@ -15,4 +15,6 @@ class MotorClass {
     void stop();  
 };
 
+extern MotorClass motor;
+
 #endif // MOTOR_H_

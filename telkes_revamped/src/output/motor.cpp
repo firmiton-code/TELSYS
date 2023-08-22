@@ -25,3 +25,5 @@ void MotorClass::stop(){
   digitalWrite(_tube_pin, LOW);
   digitalWrite(_motor_pin, LOW);
 }
+
+MotorClass motor;

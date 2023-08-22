@@ -10,6 +10,9 @@ class MAX30100Class {
   public:
     MAX30100Class();
     void begin();
+    void update();
+    void start();
+    void stop();
     int bpm();
     int spo2();
 };

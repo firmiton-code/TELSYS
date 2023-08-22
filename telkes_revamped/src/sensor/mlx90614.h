@@ -2,6 +2,7 @@
 #define MLX90614_H_
 
 #include <Arduino.h>
+#include <SPI.h>
 #include "Adafruit_MLX90614.h"
 
 class MLX90614Class {
