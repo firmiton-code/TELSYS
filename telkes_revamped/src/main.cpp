@@ -21,7 +21,7 @@ void batteryTask(void *param){
       last_read = millis();
     }
 
-    vTaskDelay(100);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
 
@@ -67,23 +67,39 @@ void mainTask(void *param){
       motor.start();
       mmhg = pressure.mmhg();
       lcd.load(2);
-      while(mmhg < 150){
+      while(mmhg < 300){
         mmhg = pressure.mmhg();
         
-        Serial.print("Sistol : ");
+        Serial.print("Pressure : ");
         Serial.print(mmhg);
         Serial.println(" mmhg");
+        
+        if(mmhg == lastmmhg){
+          mark++;
+          Serial.println("Mark : " + String(mark));
+        } else{
+          mark = 0;
+        }
+
+        if(mark > 10){
+          break;
+        }
+        
         lastmmhg = mmhg;
         
         delay(50);
       }
       delay(200);
+
+      mark = 0;
+
       motor.pause();
-      lcd.load(5);
-      while(mmhg > 70){
+      lcd.load(7);
+
+      while(mmhg > 50){
         mmhg = pressure.mmhg();
 
-        Serial.print("Diastol : ");
+        Serial.print("Pressure : ");
         Serial.print(mmhg);
         Serial.println(" mmhg");
 
@@ -92,11 +108,17 @@ void mainTask(void *param){
             mark=1;
           } else if(mark==1){
             sis=mmhg;
+            mark=2;
             mark++;
           } else if(mark>1){
             mark++;
             dis=mmhg;
           }
+          Serial.print(sis);
+          Serial.print("-");
+          Serial.print(dis);
+          Serial.print("-");
+          Serial.println(mark);
           delay(100);
         }
 
@@ -129,7 +151,7 @@ void mainTask(void *param){
       lcd.show(s1, s2, s3, s4, s5);
       read_state = false;
     }
-    vTaskDelay(1);
+    vTaskDelay(1 / portTICK_PERIOD_MS);
   }
 }
 
@@ -137,20 +159,20 @@ void setup() {
   Serial.begin(115200);
   lcd.init();
   lcd.load(2);
-  delay(100);
+  delay(50);
   motor.begin();
   lcd.load(4);
-  delay(100);
+  delay(50);
   battery.begin();
   lcd.load(5);
-  delay(100);
+  delay(50);
   bpm.begin();
   bpm.stop();
   lcd.load(6);
-  delay(100);
+  delay(50);
   pressure.begin();
   lcd.load(8);
-  delay(250);
+  delay(200);
   temp.begin();
   lcd.load(9);
   delay(100);
