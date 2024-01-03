@@ -109,50 +109,25 @@ void LCDClass::show(String value1, String value2, String value3, String value4, 
   tft.fillScreen(BG_COLOR);
   tft.pushImage(0, 0, 320, 240, Dashboard);
 
-  // tft.drawSmoothRoundRect(8, 10, 10, 12, 142, 100, TFT_DARKGREY, BG_COLOR);
-  // tft.drawSmoothRoundRect(170, 10, 10, 12, 142, 100, TFT_DARKGREY, BG_COLOR);
-  // tft.drawSmoothRoundRect(8, 130, 10, 12, 142, 100, TFT_DARKGREY, BG_COLOR);
-  // tft.drawSmoothRoundRect(170, 130, 10, 12, 142, 100, TFT_DARKGREY, BG_COLOR);
-  
-  // bgSprite.fillSprite(BG_COLOR);
-  // bgSprite.pushImage(75, 35, 140, 120, dashboard_logo);
-  // bgSprite.pushSprite(15, 25, BG_COLOR);
-
-  // tft.setTextDatum(TL_DATUM);
-  // tft.drawString("Heart Rate", 50, 15, 2);
-  // tft.drawString("Oxygen", 230, 15, 2);
-  // tft.drawString("Temperature", 37, 135, 2);
-  // tft.drawString("Blood Pressure", 210, 135, 2);
-
   tft.setTextDatum(TR_DATUM);
-  tft.drawString(value1, 108, 45, 6);
-  // tft.setTextDatum(TL_DATUM);
-  // tft.drawString("bpm", 112, 45, 2);
-  tft.setTextDatum(TR_DATUM);
-  tft.drawString(value2, 270, 45, 6);
-  // tft.setTextDatum(TL_DATUM);
-  // tft.drawString("%", 273, 45, 1);
-  tft.setTextDatum(TR_DATUM);
-  tft.drawString(value3, 123, 165, 6);
-  // tft.setTextDatum(BL_DATUM);
-  // tft.drawString("*C", 125, 205, 2);
+  tft.drawString(value1, 135, 60, 6);
+  tft.drawString(value2, 270, 60, 6);
+  tft.drawString(value3, 140, 140, 6);
   tft.setFreeFont(&FreeSans18pt7b);
-  tft.setTextDatum(TR_DATUM);
-  tft.drawString(value4, 270, 160, 1);
-  tft.drawString(value5, 270, 190, 1);
-  // tft.setTextDatum(TL_DATUM);
-  // tft.drawString("mmhg", 273, 180, 2);
+  tft.drawString(value4, 270, 135, 1);
+  tft.drawString(value5, 270, 165, 1);
+
   tft.setFreeFont(&FreeSans12pt7b);
 }
 
 void LCDClass::notice(String value, String note){
   if(value == "BPM"){
     tft.fillScreen(BG_COLOR);
-    tft.pushImage(90, 30, 100, 100, Icon_Finger);
+    tft.pushImage(110, 30, 100, 100, Icon_Finger);
     tft.drawCentreString(note, 160, 150, 1);
   } else if(value == "TENSI"){
     tft.fillScreen(BG_COLOR);
-    tft.pushImage(90, 30, 100, 100, Icon_Pressure);
+    tft.pushImage(110, 30, 100, 100, Icon_Pressure);
     tft.drawCentreString(note, 160, 150, 1);
   }
 }

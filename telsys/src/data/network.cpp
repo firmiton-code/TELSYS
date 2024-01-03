@@ -105,7 +105,7 @@ void NetworkClass::begin(){
       // if(connect_chance < 1){
       //   debug(NET_TAG, "WiFi not found!");
       //   data.format();
-      //   debug(NET_TAG, "Restarting...");
+      //   debug(NET_TAG, "Rest arting...");
       //   ESP.restart();
       // }
     }
