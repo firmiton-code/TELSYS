@@ -170,18 +170,15 @@ bool LCDClass::touchUpdate(){
   uint16_t t_x, t_y;
   tft.getTouchRaw(&t_x, &t_y);
   tft.convertRawXY(&t_x, &t_y);
-  
-  if(t_x >= 174 && t_x <= 202 && t_y >= 102 && t_y <=130){
-    _play = true;
-  }
 
   if(t_x >= 20 && t_x <= 46 && t_y >= 104 && t_y <=130){
-    // debug("Touch", "Button Power Press");
-    // esp_sleep_enable_ext0_wakeup(GPIO_NUM_14, 0);
-    // vTaskDelay(500 / portTICK_PERIOD_MS);
-    // ESP.restart();
-    // esp_deep_sleep_start();
     _power = true;
+  }
+
+  if(t_x >= 140 && t_x <= 180 && t_y >= 96 && t_y <= 136){
+    _play = true;
+  } else{
+    _play = false;
   }
 
   if(t_x >= 93 && t_x <= 226 && t_y >= 123 && t_y <=149){

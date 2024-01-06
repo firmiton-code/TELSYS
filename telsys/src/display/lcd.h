@@ -2,6 +2,7 @@
 #define LCD_H_
 
 #include <Arduino.h>
+#include "device_config.h"
 #include "lcd_assets.h"
 #include "FS.h"
 #include <SPI.h>

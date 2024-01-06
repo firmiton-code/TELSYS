@@ -7,57 +7,67 @@ bool connection_state = false;
 bool new_data = false;
 unsigned long last_read = 0;
 
-void batteryTask(void *param){
-  while(1){
-    if(millis() - last_read > 5000 && read_state == false){
-      if(battery.get_percentage() > 60){
-        lcd.showBattery(BATTERY_FULL);
-      } else if(battery.get_percentage() <= 60 && battery.get_percentage() > 20){
-        lcd.showBattery(BATTERY_HALF);
-      } else{
-        lcd.showBattery(BATTERY_LOW);
-      }
-      debugVal("MAIN", "Battery : ",battery.get_percentage());
-      debugVal("MAIN", "Battery : ",battery.get_voltage());
-      Serial.println(analogReadMilliVolts(36));
-      Serial.println(analogRead(36));
-      last_read = millis();
-    }
+float dumpTEMP = 0.0, temp_now;
+int dumpBPM = 0, dumpSPO = 0, bpm_now, n = 0, spo_now;
 
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+void scan_finger(){
+  bpm.start();
+  dumpBPM = 0; dumpSPO = 0; bpm_now = 0; n = 0; spo_now = 0;
+  for(int i = 0; i <= 2500; i++){
+    bpm.update();
+    int bpmSens = bpm.bpm() + 15;
+    int spoSens = bpm.spo2();
+    float tempSens = temp.temperature() + 2.5;
+
+    if (bpmSens >= 40.0 && bpmSens <= 200.0 && spoSens >= 80 && spoSens <= 100 && tempSens >= 34.0 && tempSens <= 45.0) { //batas rata2 pengukuran
+      dumpBPM += bpmSens;
+      dumpSPO += spoSens;
+      dumpTEMP += tempSens;
+      n++;
+
+      bpm_now = dumpBPM / n;       //kalibrasi bpm
+      spo_now = dumpSPO / n;        //kalibrasi spo
+      temp_now = dumpTEMP / n;     //kalibrasi suhu
+    }
+    Serial.println("scan...");
+    lcd.load( i / 250 );
+    delay(1);
+  }
+
+  bpm.stop();
+}
+
+void batteryUpdate(){
+  if(millis() - last_read > 5000 && read_state == false){
+    if(battery.get_percentage() > 60){
+      lcd.showBattery(BATTERY_FULL);
+    } else if(battery.get_percentage() <= 60 && battery.get_percentage() > 20){
+      lcd.showBattery(BATTERY_HALF);
+    } else{
+      lcd.showBattery(BATTERY_LOW);
+    }
+    debugVal("MAIN", "Battery : ",battery.get_percentage());
+    debugVal("MAIN", "Battery : ",battery.get_voltage());
+    Serial.println(analogReadMilliVolts(36));
+    Serial.println(analogRead(36));
+    last_read = millis();
   }
 }
 
-void mainTask(void *param){
-  while(1){
-    
+void upload() {
+  String path[6];
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-  }
-}
+  path[0] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/BPM";
+  path[1] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Oxygen";
+  path[2] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Sistole";
+  path[3] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Diastole";
+  path[4] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Suhu";
 
-void upTask(void *param) {
-  while(1){
-    if(connection_state && new_data){
-      String path[6];
-
-      path[0] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/BPM";
-      path[1] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Oxygen";
-      path[2] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Sistole";
-      path[3] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Diastole";
-      path[4] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Suhu";
-
-      fb.setString(data.read("bpm"), path[0]);
-      fb.setString(data.read("spo"), path[1]);
-      fb.setString(data.read("temp"), path[2]);
-      fb.setString(data.read("sis"), path[3]);
-      fb.setString(data.read("dis"), path[4]);
-
-      new_data = false;
-    }
-
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-  }
+  fb.setString(data.read("bpm"), path[0]);
+  fb.setString(data.read("spo"), path[1]);
+  fb.setString(data.read("temp"), path[2]);
+  fb.setString(data.read("sis"), path[3]);
+  fb.setString(data.read("dis"), path[4]);
 }
 
 void setup() {
@@ -109,18 +119,19 @@ void setup() {
   lcd.boot();
 
   delay(2000);
-  lcd.show(data.read("bpm"), data.read("spo"), data.read("temp"), data.read("sis"), data.read("dis"));
-  
-  // xTaskCreate(batteryTask, "Battery Sens Task", 1024, NULL, 3, NULL);
-  // xTaskCreate(mainTask, "Main Proccess Task", 10000, NULL, 4, NULL);
-  
-  // if(connection_state)  xTaskCreate(upTask, "Upload Data Task", 10000, NULL, 3, NULL);
+  lcd.show(data.read("bpm"), data.read("spo"), data.read("temp"), data.read("sis"), data.read("dis")); batteryUpdate();
 }
 
 void loop() {
   if(lcd.touchUpdate() || digitalRead(27)){
-    if(lcd_state){
+    if(lcd_state && lcd.getPlay()){
       read_state = true;
+    } else if(lcd.getPower()){
+      debug("Touch", "Button Power Press");
+      esp_sleep_enable_ext0_wakeup(GPIO_NUM_14, 0);
+      delay(500);
+      // ESP.restart();
+      esp_deep_sleep_start();
     } else{
       lcd_state = true;
       last_read = millis();
@@ -140,34 +151,17 @@ void loop() {
 
   if(read_state){
     lcd.reset();
-    float dumpTEMP = 0.0, temp_now;
-    int dumpBPM = 0, dumpSPO = 0, bpm_now, n = 0, spo_now;
     
     lcd.notice("BPM", "Posisikan jari pada sensor");
     delay(1000);
-    bpm.start();
-    for(int i = 0; i <= 2500; i++){
-      bpm.update();
-      int bpmSens = bpm.bpm() + 15;
-      int spoSens = bpm.spo2();
-      float tempSens = temp.temperature() + 2.5;
 
-      if (bpmSens >= 40.0 && bpmSens <= 200.0 && spoSens >= 80 && spoSens <= 100 && tempSens >= 34.0 && tempSens <= 45.0) { //batas rata2 pengukuran
-        dumpBPM += bpmSens;
-        dumpSPO += spoSens;
-        dumpTEMP += tempSens;
-        n++;
+    scan_finger();
 
-        bpm_now = dumpBPM / n;       //kalibrasi bpm
-        spo_now = dumpSPO / n;        //kalibrasi spo
-        temp_now = dumpTEMP / n;     //kalibrasi suhu
-      }
-      Serial.println("scan...");
-      lcd.load( i / 250 );
-      delay(1);
+    while(bpm_now > 300 || bpm_now < 0){
+      lcd.notice("BPM", "Posisikan kembali jari");
+      delay(1000);
+      scan_finger();
     }
-
-    bpm.stop();
 
     lcd.notice("TENSI", "Kencangkan pad pada lengan");
     delay(2000);
@@ -268,6 +262,8 @@ void loop() {
     lcd.setPlay(read_state);
     last_read = millis();
   }
+  
+  batteryUpdate();
 
   delay(100);
 }
