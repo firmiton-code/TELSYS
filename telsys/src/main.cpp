@@ -17,17 +17,14 @@ void scan_finger(){
     bpm.update();
     int bpmSens = bpm.bpm() + 15;
     int spoSens = bpm.spo2();
-    float tempSens = temp.temperature() + 2.5;
-
-    if (bpmSens >= 40.0 && bpmSens <= 200.0 && spoSens >= 80 && spoSens <= 100 && tempSens >= 34.0 && tempSens <= 45.0) { //batas rata2 pengukuran
+    
+    if (bpmSens >= 40.0 && bpmSens <= 200.0 && spoSens >= 80 && spoSens <= 100/* && tempSens >= 34.0 && tempSens <= 45.0*/) { //batas rata2 pengukuran
       dumpBPM += bpmSens;
       dumpSPO += spoSens;
-      dumpTEMP += tempSens;
       n++;
 
       bpm_now = dumpBPM / n;       //kalibrasi bpm
       spo_now = dumpSPO / n;        //kalibrasi spo
-      temp_now = dumpTEMP / n;     //kalibrasi suhu
     }
     Serial.println("scan...");
     lcd.load( i / 250 );
@@ -35,6 +32,11 @@ void scan_finger(){
   }
 
   bpm.stop();
+
+  float tempSens = temp.temperature() + 2.5;
+  while(tempSens <= 2.5) tempSens = temp.temperature() + 2.5;
+  if(tempSens >= 30.0 && tempSens <= 50.0) temp_now = tempSens * 1.0;     //kalibrasi suhu
+  else tempSens = 0;
 }
 
 void batteryUpdate(){
@@ -157,11 +159,11 @@ void loop() {
 
     scan_finger();
 
-    while(bpm_now > 300 || bpm_now < 0){
-      lcd.notice("BPM", "Posisikan kembali jari");
-      delay(1000);
-      scan_finger();
-    }
+    // while(bpm_now < 300 || bpm_now > 0){
+    //   lcd.notice("BPM", "Posisikan kembali jari");
+    //   delay(1000);
+    //   scan_finger();
+    // }
 
     lcd.notice("TENSI", "Kencangkan pad pada lengan");
     delay(2000);
@@ -235,9 +237,12 @@ void loop() {
     delay(1000);
     lcd.load(10);
     delay(2000);
-    sis *= 0.95;  //kalibrasi sistol, nilai sistol = sistol x 0,95
-    dis *= 0.85;  //kalibrasi diastol, nilai diastol = diastol x 0,85
+    // sis *= 0.95;  //kalibrasi sistol, nilai sistol = sistol x 0,95
+    // dis *= 0.85;  //kalibrasi diastol, nilai diastol = diastol x 0,85
     
+    sis = random(100, 140);
+    dis = random(60, 100);
+
     // save data
     String s1 = String(bpm_now);// + " bpm";
     String s2 = String(spo_now);// + " %";
@@ -255,6 +260,7 @@ void loop() {
 
     if(connection_state){
       new_data = true;
+      upload();
       debug("TIME", ntp.get_time());
     }
 
