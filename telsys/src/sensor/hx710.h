@@ -9,6 +9,7 @@ class HX710Class {
   public:
     HX710Class();
     void start();
+    bool ready();
     long get();
 };
 

@@ -18,12 +18,12 @@ void HX710Class::start(){
   pressure_sensor.begin(DOUT_Pin, SCLK_Pin, 128);
 }
 
+bool HX710Class::ready(){
+  return pressure_sensor.is_ready();
+}
+
 long HX710Class::get(){
-  if(pressure_sensor.is_ready()){
-    return pressure_sensor.mmHg();
-  } else{
-    return 0;
-  }
+  return pressure_sensor.mmHg();
 }
 
 HX710Class pressure;

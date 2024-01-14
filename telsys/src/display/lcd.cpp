@@ -118,9 +118,12 @@ void LCDClass::show(String value1, String value2, String value3, String value4, 
   tft.drawString(value5, 270, 165, 1);
 
   tft.setFreeFont(&FreeSans12pt7b);
+
+  _screen = MAIN_SCREEN;
 }
 
 void LCDClass::notice(String value, String note){
+  _screen = SCAN_SCREEN;
   if(value == "BPM"){
     tft.fillScreen(BG_COLOR);
     tft.pushImage(110, 30, 100, 100, Icon_Finger);
@@ -186,7 +189,31 @@ bool LCDClass::touchUpdate(){
   } else if(t_x >= 93 && t_x <= 226 && t_y >= 157 && t_y <=163){
     _connection = false;
   }
+  
+  if(t_x >= 20 && t_x <= 140 && t_y >= 20 && t_y <= 100){
+    _hr_button = true;
+  } else{
+    _hr_button = false;
+  }
 
+  if(t_x >= 20 && t_x <= 140 && t_y >= 140 && t_y <= 220){
+    _temp_button = true;
+  } else{
+    _temp_button = false;
+  }
+
+  if(t_x >= 180 && t_x <= 300 && t_y >= 20 && t_y <= 100){
+    _spo2_button = true;
+  } else{
+    _spo2_button = false;
+  }
+
+  if(t_x >= 180 && t_x <= 300 && t_y >= 140 && t_y <= 220){
+    _bp_button = true;
+  } else{
+    _bp_button = false;
+  }
+  
   return true;
 }
 
@@ -204,6 +231,26 @@ bool LCDClass::getPlay(){
 
 bool LCDClass::getPower(){
   return _power;
+}
+
+bool LCDClass::getScreen(){
+  return _screen;
+}
+
+bool LCDClass::getHRButton(){
+  return _hr_button;
+}
+
+bool LCDClass::getTempButton(){
+  return _temp_button;
+}
+
+bool LCDClass::getSPO2Button(){
+  return _spo2_button;
+}
+
+bool LCDClass::getBPButton(){
+  return _bp_button;
 }
 
 void LCDClass::setPlay(bool play){

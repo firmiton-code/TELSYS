@@ -9,6 +9,94 @@ unsigned long last_read = 0;
 
 float dumpTEMP = 0.0, temp_now;
 int dumpBPM = 0, dumpSPO = 0, bpm_now, n = 0, spo_now;
+int adc0 = 0, sis = 0, dis = 0, mmhg = 0, lastmmhg = 0, mark = 0, adc1 = 0;
+
+void blood_test(){
+        
+  motor.start();
+  mmhg = 0;
+  lcd.load(2);
+  while(mmhg < 500){
+    if(pressure.ready()){
+      mmhg = pressure.get()+350;
+      // if(mmhg < 0) mmhg = 0;
+
+      Serial.print("Pressure : ");
+      Serial.print(mmhg);
+      Serial.println(" mmhg");
+      
+      if(mmhg == lastmmhg){
+        mark++;
+        Serial.println("Mark : " + String(mark));
+      } else{
+        mark = 0;
+      }
+
+      if(mark > 5){
+        break;
+      }
+      
+      lastmmhg = mmhg;
+    }  
+    
+    delay(50);
+  }
+  delay(200);
+
+  mark = 0;
+
+  motor.pause();
+  lcd.load(7);
+
+  while(mmhg > 50){
+    if(pressure.ready()){
+      mmhg = pressure.get()+350;
+
+      Serial.print("Pressure : ");
+      Serial.print(mmhg);
+      Serial.println(" mmhg");
+
+      if(lastmmhg <= mmhg){ //deteksi detak jantung
+        if(mark==0){
+          mark=1;
+        } else if(mark==1){
+          sis=mmhg;
+          mark=2;
+          mark++;
+        } else if(mark>1){
+          mark++;
+          dis=mmhg;
+        }
+        Serial.print(sis);
+        Serial.print("-");
+        Serial.print(dis);
+        Serial.print("-");
+        Serial.println(mark);
+        delay(100);
+      }
+    }
+
+    if(mark>10) break;
+    
+    lastmmhg = mmhg;
+    delay(100);
+  }
+
+  motor.stop();
+  delay(1000);
+  lcd.load(10);
+  delay(2000);
+
+  sis *= 0.95;  //kalibrasi sistol, nilai sistol = sistol x 0,95
+  dis *= 0.85;  //kalibrasi diastol, nilai diastol = diastol x 0,85
+}
+
+void scan_temp(){
+  float tempSens = temp.temperature() + 2.5;
+  while(tempSens <= 2.5) tempSens = temp.temperature() + 2.5;
+  if(tempSens >= 30.0 && tempSens <= 50.0) temp_now = tempSens * 1.0;     //kalibrasi suhu
+  else temp_now = 0;
+}
 
 void scan_finger(){
   bpm.start();
@@ -32,11 +120,6 @@ void scan_finger(){
   }
 
   bpm.stop();
-
-  float tempSens = temp.temperature() + 2.5;
-  while(tempSens <= 2.5) tempSens = temp.temperature() + 2.5;
-  if(tempSens >= 30.0 && tempSens <= 50.0) temp_now = tempSens * 1.0;     //kalibrasi suhu
-  else tempSens = 0;
 }
 
 void batteryUpdate(){
@@ -138,6 +221,127 @@ void loop() {
       lcd_state = true;
       last_read = millis();
     }
+
+    if(lcd.getScreen() == MAIN_SCREEN){
+      if(lcd.getHRButton() || lcd.getSPO2Button()){
+        lcd.reset();
+    
+        lcd.notice("BPM", "Posisikan jari pada sensor");
+        delay(1000);
+
+        scan_finger();
+
+        // while(bpm_now < 300 || bpm_now > 0){
+        //   lcd.notice("BPM", "Posisikan kembali jari");
+        //   delay(1000);
+        //   scan_finger();
+        // }
+        
+        String s1 = String(bpm_now);// + " bpm";
+        String s2 = String(spo_now);// + " %";
+        String s3 = String(temp_now, 1);// + " *C";
+        String s4 = String(sis);
+        String s5 = String(dis);
+        
+        Serial.println(s1);
+        Serial.println(s2);
+        Serial.println(s3);
+        Serial.println(s4);
+        Serial.println(s5);
+
+        data.save("bpm", s1);
+        data.save("spo", s2);
+        data.save("temp", s3);
+        data.save("sis", s4);
+        data.save("dis", s5);
+
+        lcd.show(s1, s2, s3, s4, s5);
+
+        if(connection_state){
+          new_data = true;
+          upload();
+          debug("TIME", ntp.get_time());
+        }
+
+        read_state = false;
+        lcd.setPlay(read_state);
+        last_read = millis();
+      } else if(lcd.getTempButton()){
+        lcd.reset();
+    
+        lcd.notice("BPM", "Posisikan jari pada sensor");
+        delay(1000);
+
+        scan_temp();
+        
+        String s1 = String(bpm_now);// + " bpm";
+        String s2 = String(spo_now);// + " %";
+        String s3 = String(temp_now, 1);// + " *C";
+        String s4 = String(sis);
+        String s5 = String(dis);
+        
+        Serial.println(s1);
+        Serial.println(s2);
+        Serial.println(s3);
+        Serial.println(s4);
+        Serial.println(s5);
+
+        data.save("bpm", s1);
+        data.save("spo", s2);
+        data.save("temp", s3);
+        data.save("sis", s4);
+        data.save("dis", s5);
+
+        lcd.show(s1, s2, s3, s4, s5);
+
+        if(connection_state){
+          new_data = true;
+          upload();
+          debug("TIME", ntp.get_time());
+        }
+      } else if(lcd.getBPButton()){
+        lcd.reset();
+
+        lcd.notice("TENSI", "Kencangkan pad pada lengan");
+        delay(2000);
+        
+        blood_test();
+        
+        // sis = random(100, 140);
+        // dis = random(60, 100);
+
+        // save data
+        String s1 = String(bpm_now);// + " bpm";
+        String s2 = String(spo_now);// + " %";
+        String s3 = String(temp_now, 1);// + " *C";
+        String s4 = String(sis);
+        String s5 = String(dis);
+        
+        Serial.println(s1);
+        Serial.println(s2);
+        Serial.println(s3);
+        Serial.println(s4);
+        Serial.println(s5);
+
+        data.save("bpm", s1);
+        data.save("spo", s2);
+        data.save("temp", s3);
+        data.save("sis", s4);
+        data.save("dis", s5);
+
+        lcd.show(s1, s2, s3, s4, s5);
+
+        if(connection_state){
+          new_data = true;
+          upload();
+          debug("TIME", ntp.get_time());
+        }
+
+        read_state = false;
+        lcd.setPlay(read_state);
+        last_read = millis();
+      }
+    }
   }
 
   if(millis() - last_read > 30000 && lcd_state){
@@ -167,81 +371,11 @@ void loop() {
 
     lcd.notice("TENSI", "Kencangkan pad pada lengan");
     delay(2000);
-    int adc0 = 0, sis = 0, dis = 0, mmhg = 0, lastmmhg = 0, mark = 0, adc1 = 0;
-        
-    motor.start();
-    mmhg = pressure.get();
-    lcd.load(2);
-    while(mmhg < 300){
-      mmhg = pressure.get();
-      
-      Serial.print("Pressure : ");
-      Serial.print(mmhg);
-      Serial.println(" mmhg");
-      
-      if(mmhg == lastmmhg){
-        mark++;
-        Serial.println("Mark : " + String(mark));
-      } else{
-        mark = 0;
-      }
-
-      if(mark > 10){
-        break;
-      }
-      
-      lastmmhg = mmhg;
-      
-      delay(50);
-    }
-    delay(200);
-
-    mark = 0;
-
-    motor.pause();
-    lcd.load(7);
-
-    while(mmhg > 50){
-      mmhg = pressure.get();
-
-      Serial.print("Pressure : ");
-      Serial.print(mmhg);
-      Serial.println(" mmhg");
-
-      if(lastmmhg <= mmhg){ //deteksi detak jantung
-        if(mark==0){
-          mark=1;
-        } else if(mark==1){
-          sis=mmhg;
-          mark=2;
-          mark++;
-        } else if(mark>1){
-          mark++;
-          dis=mmhg;
-        }
-        Serial.print(sis);
-        Serial.print("-");
-        Serial.print(dis);
-        Serial.print("-");
-        Serial.println(mark);
-        delay(100);
-      }
-
-      if(mark>10) break;
-      
-      lastmmhg = mmhg;
-      delay(100);
-    }
-
-    motor.stop();
-    delay(1000);
-    lcd.load(10);
-    delay(2000);
-    // sis *= 0.95;  //kalibrasi sistol, nilai sistol = sistol x 0,95
-    // dis *= 0.85;  //kalibrasi diastol, nilai diastol = diastol x 0,85
     
-    sis = random(100, 140);
-    dis = random(60, 100);
+    blood_test();
+    
+    // sis = random(100, 140);
+    // dis = random(60, 100);
 
     // save data
     String s1 = String(bpm_now);// + " bpm";
@@ -250,6 +384,12 @@ void loop() {
     String s4 = String(sis);
     String s5 = String(dis);
     
+    Serial.println(s1);
+    Serial.println(s2);
+    Serial.println(s3);
+    Serial.println(s4);
+    Serial.println(s5);
+
     data.save("bpm", s1);
     data.save("spo", s2);
     data.save("temp", s3);

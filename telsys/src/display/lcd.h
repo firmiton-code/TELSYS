@@ -30,6 +30,11 @@ typedef enum {
   BATTERY_FULL
 } Battery_Level_t;
 
+typedef enum {
+  MAIN_SCREEN,
+  SCAN_SCREEN
+} Screen_t;
+
 class LCDClass{
   private:
     TFT_eSPI tft = TFT_eSPI();
@@ -40,6 +45,11 @@ class LCDClass{
     bool _connection = false;
     bool _play = false;
     bool _power = false;
+    bool _hr_button = false;
+    bool _temp_button = false;
+    bool _spo2_button = false;
+    bool _bp_button = false;
+    Screen_t _screen;
 
   public:
     LCDClass();
@@ -58,6 +68,12 @@ class LCDClass{
     bool getConnection();
     bool getPlay();
     bool getPower();
+    bool getScreen();
+    
+    bool getHRButton();
+    bool getTempButton();
+    bool getSPO2Button();
+    bool getBPButton();
 
     void setPlay(bool play);
     void update(int batt);
