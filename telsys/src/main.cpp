@@ -239,23 +239,14 @@ void loop() {
         
         String s1 = String(bpm_now);// + " bpm";
         String s2 = String(spo_now);// + " %";
-        String s3 = String(temp_now, 1);// + " *C";
-        String s4 = String(sis);
-        String s5 = String(dis);
         
         Serial.println(s1);
         Serial.println(s2);
-        Serial.println(s3);
-        Serial.println(s4);
-        Serial.println(s5);
 
         data.save("bpm", s1);
         data.save("spo", s2);
-        data.save("temp", s3);
-        data.save("sis", s4);
-        data.save("dis", s5);
 
-        lcd.show(s1, s2, s3, s4, s5);
+        lcd.show(s1, s2, data.read("temp"), data.read("sis"), data.read("dis"));
 
         if(connection_state){
           new_data = true;
@@ -274,25 +265,15 @@ void loop() {
 
         scan_temp();
         
-        String s1 = String(bpm_now);// + " bpm";
-        String s2 = String(spo_now);// + " %";
+        delay(2000);
+
         String s3 = String(temp_now, 1);// + " *C";
-        String s4 = String(sis);
-        String s5 = String(dis);
         
-        Serial.println(s1);
-        Serial.println(s2);
         Serial.println(s3);
-        Serial.println(s4);
-        Serial.println(s5);
-
-        data.save("bpm", s1);
-        data.save("spo", s2);
+        
         data.save("temp", s3);
-        data.save("sis", s4);
-        data.save("dis", s5);
-
-        lcd.show(s1, s2, s3, s4, s5);
+        
+        lcd.show(data.read("bpm"), data.read("spo"), s3, data.read("sis"), data.read("dis"));
 
         if(connection_state){
           new_data = true;
@@ -311,26 +292,17 @@ void loop() {
         // dis = random(60, 100);
 
         // save data
-        String s1 = String(bpm_now);// + " bpm";
-        String s2 = String(spo_now);// + " %";
-        String s3 = String(temp_now, 1);// + " *C";
         String s4 = String(sis);
         String s5 = String(dis);
         
-        Serial.println(s1);
-        Serial.println(s2);
-        Serial.println(s3);
         Serial.println(s4);
         Serial.println(s5);
 
-        data.save("bpm", s1);
-        data.save("spo", s2);
-        data.save("temp", s3);
         data.save("sis", s4);
         data.save("dis", s5);
-
-        lcd.show(s1, s2, s3, s4, s5);
-
+        
+        lcd.show(data.read("bpm"), data.read("spo"), data.read("temp"), s4, s5);
+        
         if(connection_state){
           new_data = true;
           upload();

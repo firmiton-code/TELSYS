@@ -12,6 +12,7 @@
 #include "assets/Base_BG.h"
 #include "assets/Choose_Mode.h"
 #include "assets/Boot.h"
+#include "assets/Keeta_Boot.h"
 #include "assets/Dashboard.h"
 #include "assets/Icon_Finger.h"
 #include "assets/Icon_Loading.h"

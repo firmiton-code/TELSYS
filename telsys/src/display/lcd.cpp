@@ -94,15 +94,16 @@ void LCDClass::init(){
   //   Serial.println("Sprite creation failed");
   // }
 
-  // tft.pushImage(90, 40, 140, 120, telsys_logo);
-  tft.pushImage(0, 0, 320, 240, Boot);
+  tft.pushImage(0, 0, 320, 240, Keeta_Boot);
+  // tft.pushImage(0, 0, 320, 240, Boot);
 }
 
 void LCDClass::boot(){
   delay(2000);
   tft.fillScreen(BG_COLOR);
   // tft.pushImage(90, 60, 140, 120, telsys_logo);
-  tft.pushImage(0, 0, 320, 240, Boot);
+  tft.pushImage(0, 0, 320, 240, Keeta_Boot);
+  // tft.pushImage(0, 0, 320, 240, Boot);
 }
 
 void LCDClass::show(String value1, String value2, String value3, String value4, String value5){
