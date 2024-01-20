@@ -10,10 +10,12 @@ void FirebaseClass::begin(String url, String secret){
   config.signer.tokens.legacy_token = secret.c_str();
   config.database_url = url;
 
+  // fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+  Firebase.reconnectNetwork(true);
+
   Firebase.begin(&config, &auth);
 
   // Comment or pass false value when WiFi reconnection will control by your code or third party library
-  Firebase.reconnectWiFi(true);
 }
 
 String FirebaseClass::set(int data, String path){

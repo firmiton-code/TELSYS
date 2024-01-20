@@ -187,8 +187,14 @@ bool LCDClass::touchUpdate(){
 
   if(t_x >= 93 && t_x <= 226 && t_y >= 123 && t_y <=149){
     _connection = true;
-  } else if(t_x >= 93 && t_x <= 226 && t_y >= 157 && t_y <=163){
+  } else{
     _connection = false;
+  }
+
+  if(t_x >= 93 && t_x <= 226 && t_y >= 157 && t_y <=163){
+    _offline = true;
+  } else{
+    _offline = false;
   }
   
   if(t_x >= 20 && t_x <= 140 && t_y >= 20 && t_y <= 100){
@@ -248,6 +254,10 @@ bool LCDClass::getTempButton(){
 
 bool LCDClass::getSPO2Button(){
   return _spo2_button;
+}
+
+bool LCDClass::getOffline(){
+  return _offline;
 }
 
 bool LCDClass::getBPButton(){

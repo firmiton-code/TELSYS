@@ -16,6 +16,9 @@
 #define DEFAULT_PASS        "embeddedelectronics"
 #define DEFAULT_AP_SSID     "TELSYS"
 
+#define FIREBASE_HOST       "https://telkes-51623-default-rtdb.firebaseio.com/" //url firebase
+#define FIREBASE_AUTH       "SzkT6Dphy7Sy1MWZYCNFCNLW6tQ5fBkO44gilMMC"            //credential firebase
+
 #define DEFAULT_DEVICE_CODE (uint32_t)ESP.getEfuseMac()
 
 #define debug(x, y)         Serial.print("[");Serial.print(millis());Serial.print("]"); Serial.print("[");Serial.print(x);Serial.print("] "); Serial.println(y);

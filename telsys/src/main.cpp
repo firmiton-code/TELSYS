@@ -10,6 +10,7 @@ unsigned long last_read = 0;
 float dumpTEMP = 0.0, temp_now;
 int dumpBPM = 0, dumpSPO = 0, bpm_now, n = 0, spo_now;
 int adc0 = 0, sis = 0, dis = 0, mmhg = 0, lastmmhg = 0, mark = 0, adc1 = 0;
+String path[6], data1, data2, data3, data4, data5;
 
 void blood_test(){
         
@@ -93,8 +94,21 @@ void blood_test(){
 
 void scan_temp(){
   float tempSens = temp.temperature() + 2.5;
-  while(tempSens <= 2.5) tempSens = temp.temperature() + 2.5;
-  if(tempSens >= 30.0 && tempSens <= 50.0) temp_now = tempSens * 1.0;     //kalibrasi suhu
+  int n2 = 0;
+  float dumpTemp = 0.00;
+  for(int i = 0; i <= 2500; i++){    
+    tempSens = temp.temperature() + 2.5;
+    if (tempSens >= 34.0 && tempSens <= 45.0) { //batas rata2 pengukuran
+      dumpTemp += tempSens;
+      n2++;
+
+      temp_now = dumpTemp / n2;       //kalibrasi bpm
+    }
+    Serial.println("scan...");
+    lcd.load( i / 250 );
+    delay(1);
+  }
+  if(temp_now >= 30.0 && temp_now <= 50.0) temp_now = temp_now * 1.0;     //kalibrasi suhu
   else temp_now = 0;
 }
 
@@ -139,42 +153,47 @@ void batteryUpdate(){
   }
 }
 
-void upload() {
-  String path[6];
-
-  path[0] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/BPM";
-  path[1] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Oxygen";
-  path[2] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Sistole";
-  path[3] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Diastole";
-  path[4] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Suhu";
-
-  fb.setString(data.read("bpm"), path[0]);
-  fb.setString(data.read("spo"), path[1]);
-  fb.setString(data.read("temp"), path[2]);
-  fb.setString(data.read("sis"), path[3]);
-  fb.setString(data.read("dis"), path[4]);
-}
-
 void setup() {
   Serial.begin(115200);
   lcd.init();
   lcd.load(1);
   unsigned long time_now = millis();
-  net.connect(DEFAULT_SSID, DEFAULT_PASS);
+  net.connect(data.read("ssid"), data.read("pass"));
+  int connect_chances = 10;
+  while (!net.get_status()){
+    if(millis() - time_now > 1000){
+      Serial.print(".");
+      connect_chances--;
+      debug("WIFI", connect_chances);
+      if(connect_chances < 1) {
+        data.format();
+        break;
+      }
 
-  if(net.get_status()){
-    connection_state = true;
-  } else{
-    lcd.show_choose();
-    bool touch = false;
-    while(!touch){
-      touch = lcd.touchUpdate();
+      time_now = millis();
     }
-    if(lcd.getConnection()){
-      net.begin();
-      connection_state = true;
-    } else{
-      connection_state = false;
+  }
+  
+  if(!net.get_status()) lcd.show_choose();
+  else {
+    net.begin();
+    fb.begin(FIREBASE_HOST, FIREBASE_AUTH);
+    connection_state = true;
+  }
+
+  while(!net.get_status()){
+    if(lcd.touchUpdate()){
+      if(lcd.getConnection()){
+        net.begin();
+        connection_state = true;
+        fb.begin(FIREBASE_HOST, FIREBASE_AUTH);
+        break;
+      } 
+      
+      if(lcd.getOffline()){
+        connection_state = false;
+        break;
+      }
     }
   }
   
@@ -211,13 +230,17 @@ void loop() {
   if(lcd.touchUpdate() || digitalRead(27)){
     if(lcd_state && lcd.getPlay()){
       read_state = true;
-    } else if(lcd.getPower()){
+    } 
+    
+    if(lcd.getPower()){
       debug("Touch", "Button Power Press");
       esp_sleep_enable_ext0_wakeup(GPIO_NUM_14, 0);
       delay(500);
       // ESP.restart();
       esp_deep_sleep_start();
-    } else{
+    }
+    
+    if(lcd_state == false){
       lcd_state = true;
       last_read = millis();
     }
@@ -227,15 +250,9 @@ void loop() {
         lcd.reset();
     
         lcd.notice("BPM", "Posisikan jari pada sensor");
-        delay(1000);
+        delay(2000);
 
         scan_finger();
-
-        // while(bpm_now < 300 || bpm_now > 0){
-        //   lcd.notice("BPM", "Posisikan kembali jari");
-        //   delay(1000);
-        //   scan_finger();
-        // }
         
         String s1 = String(bpm_now);// + " bpm";
         String s2 = String(spo_now);// + " %";
@@ -249,19 +266,23 @@ void loop() {
         lcd.show(s1, s2, data.read("temp"), data.read("sis"), data.read("dis"));
 
         if(connection_state){
-          new_data = true;
-          upload();
+          path[0] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/BPM";
+          path[1] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Oxygen";
+          debugVal("UPLOAD", "Status...", fb.setString(s1, path[0]));
+          debugVal("UPLOAD", "Status...", fb.setString(s2, path[1]));
           debug("TIME", ntp.get_time());
         }
 
         read_state = false;
         lcd.setPlay(read_state);
         last_read = millis();
-      } else if(lcd.getTempButton()){
+      } 
+      
+      if(lcd.getTempButton()){
         lcd.reset();
     
         lcd.notice("BPM", "Posisikan jari pada sensor");
-        delay(1000);
+        delay(2000);
 
         scan_temp();
         
@@ -276,11 +297,13 @@ void loop() {
         lcd.show(data.read("bpm"), data.read("spo"), s3, data.read("sis"), data.read("dis"));
 
         if(connection_state){
-          new_data = true;
-          upload();
+          path[2] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Sistole";
+          debugVal("UPLOAD", "Status...", fb.setString(s3, path[2]));
           debug("TIME", ntp.get_time());
         }
-      } else if(lcd.getBPButton()){
+      }
+      
+      if(lcd.getBPButton()){
         lcd.reset();
 
         lcd.notice("TENSI", "Kencangkan pad pada lengan");
@@ -304,8 +327,10 @@ void loop() {
         lcd.show(data.read("bpm"), data.read("spo"), data.read("temp"), s4, s5);
         
         if(connection_state){
-          new_data = true;
-          upload();
+          path[3] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Diastole";
+          path[4] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Suhu";
+          debugVal("UPLOAD", "Status...", fb.setString(s4, path[3]));
+          debugVal("UPLOAD", "Status...", fb.setString(s5, path[4]));
           debug("TIME", ntp.get_time());
         }
 
@@ -331,7 +356,7 @@ void loop() {
     lcd.reset();
     
     lcd.notice("BPM", "Posisikan jari pada sensor");
-    delay(1000);
+    delay(2000);
 
     scan_finger();
 
@@ -340,7 +365,8 @@ void loop() {
     //   delay(1000);
     //   scan_finger();
     // }
-
+    scan_temp();
+    
     lcd.notice("TENSI", "Kencangkan pad pada lengan");
     delay(2000);
     
@@ -371,8 +397,18 @@ void loop() {
     lcd.show(s1, s2, s3, s4, s5);
 
     if(connection_state){
-      new_data = true;
-      upload();
+      path[0] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/BPM";
+      path[1] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Oxygen";
+      path[2] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Sistole";
+      path[3] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Diastole";
+      path[4] = "Data/" + net.get_uid() + "/Hasil Pengukuran/" + ntp.get_raw_epoch() + "/Suhu";
+      
+      debugVal("UPLOAD", "Status...", fb.setString(s1, path[0]));
+      debugVal("UPLOAD", "Status...", fb.setString(s2, path[1]));
+      debugVal("UPLOAD", "Status...", fb.setString(s3, path[2]));
+      debugVal("UPLOAD", "Status...", fb.setString(s4, path[3]));
+      debugVal("UPLOAD", "Status...", fb.setString(s5, path[4]));
+
       debug("TIME", ntp.get_time());
     }
 

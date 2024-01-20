@@ -43,6 +43,7 @@ class LCDClass{
     TFT_eSprite logoSprite = TFT_eSprite(&tft);
     Battery_Level_t batt;
     bool _connection = false;
+    bool _offline = false;
     bool _play = false;
     bool _power = false;
     bool _hr_button = false;
@@ -69,6 +70,7 @@ class LCDClass{
     bool getPlay();
     bool getPower();
     bool getScreen();
+    bool getOffline();
     
     bool getHRButton();
     bool getTempButton();

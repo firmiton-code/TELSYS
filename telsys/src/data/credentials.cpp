@@ -15,12 +15,16 @@ void CredentialsClass::save(String dir_name, String value){
 String CredentialsClass::read(String dir_name){
   dir.begin(memory->_directory, false);
   String res = dir.getString(dir_name.c_str(), "");
+  dir.end();
   return res;
 }
 
 void CredentialsClass::format(){
   dir.begin(memory->_directory, false);
-  dir.clear();
+  // dir.clear();
+  dir.putString("ssid", "");
+  dir.putString("pass", "");
+  dir.putString("uid", "");
   dir.end();
 }
 
